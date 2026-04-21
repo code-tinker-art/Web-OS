@@ -19,7 +19,6 @@ export class AppManager {
     }
 
     async #loadAndMergeApps(div: HTMLDivElement) {
-        window.history.replaceState({}, document.title, window.location.pathname)
 
         try {
             let htmlRes = await fetch(this.htmlPath);

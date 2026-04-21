@@ -1,4 +1,5 @@
 (function () {
+    console.log("hii")
     let current = document.currentScript;
     let parent = current.parentElement;
     parent.tabIndex = 0;

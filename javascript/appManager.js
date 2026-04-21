@@ -18,7 +18,6 @@ export class AppManager {
         }, 300);
     }
     async #loadAndMergeApps(div) {
-        window.history.replaceState({}, document.title, window.location.pathname);
         try {
             let htmlRes = await fetch(this.htmlPath);
             const html = await htmlRes.text();

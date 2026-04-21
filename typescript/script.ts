@@ -1,7 +1,15 @@
 import { Kernel, App } from "./kernel.js";
 import { apps } from "./apps.js";
+import { FileSystem_WebOS } from "./file_system.js"
 
 let kernel = new Kernel(".screen");
+let fs: FileSystem_WebOS = new FileSystem_WebOS();
+
+(window as any).WebOS = {
+    kernel,
+    fs
+}
+
 let input = document.querySelector(".webos_taskbar_input") as HTMLInputElement;
 let suggestion = document.querySelector(".suggestion") as HTMLDivElement;
 let appList: string[] = []
@@ -16,10 +24,17 @@ input.addEventListener("keydown", (e) => {
     })
 
     if (e.key === "Enter") {
-        kernel.open(input.value);
+        if (appList.includes(input.value)) {
+            kernel.open(input.value);
+        }
     } else if (e.key === "Tab") {
         e.preventDefault();
-        input.value = match[0];
+        if (match.length > 0) {
+            input.value = match[0];
+            suggestion.textContent = match[0];
+        } else {
+            suggestion.textContent = "";
+        }
     }
 
     suggestion.textContent = match[0];

@@ -1,0 +1,74 @@
+<div class="fe-root">
+    <div class="fe-titlebar">
+        <div class="fe-titlebar-left">
+            <div class="fe-btn fe-btn-close"></div>
+            <div class="fe-btn fe-btn-min"></div>
+            <div class="fe-btn fe-btn-max"></div>
+        </div>
+        <div class="fe-titlebar-title">File Explorer</div>
+        <div class="fe-titlebar-right"></div>
+    </div>
+
+    <div class="fe-toolbar">
+        <button class="fe-tb-btn" id="fe-back" title="Back">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        </button>
+        <button class="fe-tb-btn" id="fe-forward" title="Forward">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        </button>
+        <div class="fe-breadcrumb" id="fe-breadcrumb"></div>
+        <button class="fe-tb-btn" id="fe-new-folder" title="New Folder">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 3.5A1.5 1.5 0 012.5 2h3L7 3.5h4.5A1.5 1.5 0 0113 5v6a1.5 1.5 0 01-1.5 1.5h-9A1.5 1.5 0 011 11V3.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" /><path d="M7 7v4M5 9h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" /></svg>
+        </button>
+        <button class="fe-tb-btn" id="fe-new-file" title="New File">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 1.5h5.5L11 4v8.5H3V1.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" /><path d="M8.5 1.5V4H11" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" /><path d="M5 7h4M5 9.5h2.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" /></svg>
+        </button>
+        <div class="fe-view-toggle">
+            <button class="fe-tb-btn active" id="fe-grid-view" title="Grid view">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2" /><rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2" /><rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2" /><rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2" /></svg>
+            </button>
+            <button class="fe-tb-btn" id="fe-list-view" title="List view">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><line x1="4" y1="3" x2="13" y2="3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" /><line x1="4" y1="7" x2="13" y2="7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" /><line x1="4" y1="11" x2="13" y2="11" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" /><circle cx="1.5" cy="3" r="1" fill="currentColor" /><circle cx="1.5" cy="7" r="1" fill="currentColor" /><circle cx="1.5" cy="11" r="1" fill="currentColor" /></svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="fe-body">
+        <div class="fe-sidebar" id="fe-sidebar">
+            <div class="fe-sidebar-section">
+                <div class="fe-sidebar-label">LOCATIONS</div>
+                <div class="fe-sidebar-item active" id="fe-sidebar-home">
+                    <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1 6L6.5 1.5 12 6V12H8.5V8.5H4.5V12H1V6z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" /></svg>
+                    Home
+                </div>
+            </div>
+            <div class="fe-sidebar-section" id="fe-sidebar-tree-section">
+                <div class="fe-sidebar-label">FOLDERS</div>
+                <div id="fe-sidebar-tree"></div>
+            </div>
+        </div>
+
+        <div class="fe-main">
+            <div class="fe-files" id="fe-files"></div>
+            <div class="fe-statusbar" id="fe-statusbar">0 items</div>
+        </div>
+    </div>
+
+    <div class="fe-modal hidden" id="fe-modal">
+        <div class="fe-modal-box">
+            <div class="fe-modal-title" id="fe-modal-title">New Folder</div>
+            <input class="fe-modal-input" id="fe-modal-input" type="text" />
+            <div class="fe-modal-row">
+                <button class="fe-modal-btn secondary" id="fe-modal-cancel">Cancel</button>
+                <button class="fe-modal-btn primary" id="fe-modal-confirm">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="fe-ctx-menu hidden" id="fe-ctx-menu">
+        <div class="fe-ctx-item" id="fe-ctx-open">Open</div>
+        <div class="fe-ctx-item" id="fe-ctx-rename">Rename</div>
+        <div class="fe-ctx-divider"></div>
+        <div class="fe-ctx-item danger" id="fe-ctx-delete">Delete</div>
+    </div>
+</div>

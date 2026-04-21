@@ -62,6 +62,8 @@ export class Kernel {
             div.style.overflow = "clip";
             div.style.position = "absolute";
             div.className = openApp.name;
+            div.style.left = `${Math.random() * 100}%`;
+            div.style.top = `${Math.random() * 100}%`;
             if (openApp.resizable)
                 this.addResizeListener(div);
             if (openApp.addDragListener)
@@ -72,9 +74,6 @@ export class Kernel {
                     div.querySelectorAll("[data-resize]").forEach(h => div.appendChild(h));
                 }
             });
-            if (openApp.resizable) {
-                div.querySelectorAll("[data-resize]").forEach(h => div.appendChild(h));
-            }
             this.parentElem.appendChild(div);
         }, 300);
     }
@@ -120,8 +119,17 @@ export class Kernel {
                 const startT = div.offsetTop;
                 const minW = parseInt(div.style.minWidth) || 100;
                 const minH = parseInt(div.style.minHeight) || 100;
-                const maxW = parseInt(div.style.maxWidth) || Infinity;
-                const maxH = parseInt(div.style.maxHeight) || Infinity;
+                const parseSize = (val, fallback) => {
+                    if (!val)
+                        return fallback;
+                    if (val.endsWith("vw"))
+                        return window.innerWidth;
+                    if (val.endsWith("vh"))
+                        return window.innerHeight;
+                    return parseInt(val) || fallback;
+                };
+                const maxW = parseSize(div.style.maxWidth, Infinity);
+                const maxH = parseSize(div.style.maxHeight, Infinity);
                 const onMouseMove = (e) => {
                     const dx = e.clientX - startX;
                     const dy = e.clientY - startY;
