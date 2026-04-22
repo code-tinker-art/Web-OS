@@ -18,19 +18,34 @@ export class AppManager {
         }, 300);
     }
     async #loadAndMergeApps(div) {
+        div.style.visibility = "hidden";
         try {
-            let htmlRes = await fetch(this.htmlPath);
+            const htmlRes = await fetch(this.htmlPath);
             const html = await htmlRes.text();
-            let link = document.createElement("link");
-            link.rel = "stylesheet";
-            link.href = this.cssPath;
-            let script = document.createElement("script");
-            script.src = `${this.jsPath}`;
+            if (this.cssPath) {
+                await new Promise((resolve) => {
+                    const link = document.createElement("link");
+                    link.rel = "stylesheet";
+                    link.href = this.cssPath;
+                    link.onload = () => resolve();
+                    link.onerror = () => resolve();
+                    div.appendChild(link);
+                });
+            }
             div.insertAdjacentHTML("afterbegin", html);
-            div.append(link, script);
+            await new Promise((resolve) => {
+                const script = document.createElement("script");
+                script.src = this.jsPath;
+                script.onload = () => resolve();
+                script.onerror = () => resolve();
+                div.appendChild(script);
+            });
         }
         catch (e) {
             console.error("Error fetching App data:", e);
+        }
+        finally {
+            div.style.visibility = "visible";
         }
     }
 }

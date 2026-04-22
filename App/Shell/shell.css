@@ -1,0 +1,309 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap');
+
+.sh-root {
+    --sh-bg: #0d0d0d;
+    --sh-surface: #141414;
+    --sh-border: #222;
+    --sh-green: #39ff6e;
+    --sh-green-dim: #1a7a35;
+    --sh-cyan: #3fffd2;
+    --sh-yellow: #ffe066;
+    --sh-red: #ff5f5f;
+    --sh-muted: #444;
+    --sh-text: #c8c8c8;
+    --sh-prompt-user: #39ff6e;
+    --sh-prompt-at: #555;
+    --sh-prompt-host: #3fffd2;
+    --sh-prompt-path: #ffe066;
+    --sh-prompt-sym: #777;
+    --sh-font: 'JetBrains Mono', 'Cascadia Code', 'Fira Mono', monospace;
+    --sh-radius: 10px;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--sh-bg);
+    font-family: var(--sh-font);
+    font-size: 12.5px;
+    line-height: 1.6;
+    border-radius: var(--sh-radius);
+    border: 1px solid var(--sh-border);
+    overflow: hidden;
+    position: relative;
+}
+
+    /* Scanline overlay for character */
+    .sh-root::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient( 0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px );
+        pointer-events: none;
+        z-index: 10;
+        border-radius: var(--sh-radius);
+    }
+
+/* Titlebar */
+.sh-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 36px;
+    padding: 0 12px;
+    background: var(--sh-surface);
+    border-bottom: 1px solid var(--sh-border);
+    flex-shrink: 0;
+}
+
+.sh-titlebar-left {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.sh-titlebar-right {
+    width: 58px;
+}
+
+.sh-titlebar-title {
+    font-size: 11px;
+    color: var(--sh-muted);
+    letter-spacing: 0.08em;
+    font-weight: 400;
+}
+
+.sh-btn {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+    .sh-btn:hover {
+        opacity: 0.75;
+    }
+
+.sh-btn-close {
+    background: #ff5f57;
+}
+
+.sh-btn-min {
+    background: #febc2e;
+}
+
+.sh-btn-max {
+    background: #28c840;
+}
+
+/* Body */
+.sh-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 10px 14px 10px;
+}
+
+/* Output area */
+.sh-output {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: #222 transparent;
+    padding-bottom: 6px;
+}
+
+    .sh-output::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .sh-output::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .sh-output::-webkit-scrollbar-thumb {
+        background: #222;
+        border-radius: 2px;
+    }
+
+/* Output lines */
+.sh-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px;
+    min-height: 1.6em;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+    .sh-line + .sh-line {
+        margin-top: 0;
+    }
+
+.sh-line-prompt {
+    display: flex;
+    align-items: baseline;
+    gap: 0;
+    flex-shrink: 0;
+}
+
+.sh-line-cmd {
+    color: var(--sh-text);
+}
+
+.sh-line-out {
+    color: var(--sh-text);
+    width: 100%;
+    padding-left: 2px;
+}
+
+.sh-line-err {
+    color: var(--sh-red);
+    width: 100%;
+    padding-left: 2px;
+}
+
+.sh-line-info {
+    color: var(--sh-cyan);
+    width: 100%;
+    padding-left: 2px;
+}
+
+.sh-line-success {
+    color: var(--sh-green);
+    width: 100%;
+    padding-left: 2px;
+}
+
+/* Prompt parts */
+.sh-p-user {
+    color: var(--sh-prompt-user);
+}
+
+.sh-p-at {
+    color: var(--sh-prompt-at);
+}
+
+.sh-p-host {
+    color: var(--sh-prompt-host);
+}
+
+.sh-p-colon {
+    color: var(--sh-prompt-at);
+}
+
+.sh-p-path {
+    color: var(--sh-prompt-path);
+}
+
+.sh-p-sym {
+    color: var(--sh-prompt-sym);
+    margin-right: 6px;
+}
+
+/* ls output grid */
+.sh-ls-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 20px;
+    padding-left: 2px;
+    width: 100%;
+}
+
+.sh-ls-folder {
+    color: var(--sh-yellow);
+}
+
+.sh-ls-file {
+    color: var(--sh-text);
+}
+
+/* cat output */
+.sh-cat-box {
+    border-left: 2px solid var(--sh-green-dim);
+    padding: 4px 0 4px 10px;
+    color: var(--sh-text);
+    width: 100%;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* boot animation */
+@keyframes sh-blink {
+    0%,100% {
+        opacity: 1
+    }
+
+    50% {
+        opacity: 0
+    }
+}
+
+.sh-cursor {
+    display: inline-block;
+    width: 7px;
+    height: 13px;
+    background: var(--sh-green);
+    vertical-align: text-bottom;
+    animation: sh-blink 1s step-end infinite;
+    margin-left: 1px;
+}
+
+/* Input row */
+.sh-input-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-shrink: 0;
+    padding-top: 2px;
+}
+
+.sh-prompt {
+    white-space: nowrap;
+    flex-shrink: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 0;
+    margin-right: 6px;
+}
+
+.sh-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--sh-text);
+    font-family: var(--sh-font);
+    font-size: 12.5px;
+    caret-color: var(--sh-green);
+    padding: 0;
+}
+
+/* Boot text */
+.sh-boot-ascii {
+    color: var(--sh-green);
+    font-size: 10px;
+    line-height: 1.2;
+    white-space: pre;
+    opacity: 0.85;
+}
+
+.sh-boot-line {
+    color: var(--sh-muted);
+    font-size: 11px;
+}
+
+    .sh-boot-line span {
+        color: var(--sh-cyan);
+    }
+
+.sh-boot-ok {
+    color: var(--sh-green);
+}
+
+.sh-boot-sep {
+    color: var(--sh-border);
+}

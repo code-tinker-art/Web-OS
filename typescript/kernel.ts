@@ -88,8 +88,14 @@ export class Kernel {
             div.style.position = "absolute";
             div.className = openApp.name;
 
-            div.style.left = `${Math.random() * 100}%`;
-            div.style.top = `${Math.random() * 100}%`;
+            const parentW = this.parentElem.offsetWidth;
+            const parentH = this.parentElem.offsetHeight;
+            const appW = parseInt(openApp.width) || 300;
+            const appH = parseInt(openApp.height) || 200;
+            const maxLeft = Math.max(0, parentW - appW);
+            const maxTop = Math.max(0, parentH - appH);
+            div.style.left = `${Math.floor(Math.random() * maxLeft)}px`;
+            div.style.top = `${Math.floor(Math.random() * maxTop)}px`;
 
             if (openApp.resizable) this.addResizeListener(div);
             if (openApp.addDragListener) this.addDragListener(div);
@@ -154,10 +160,10 @@ export class Kernel {
                 const minW = parseInt(div.style.minWidth) || 100;
                 const minH = parseInt(div.style.minHeight) || 100;
 
-                const parseSize = (val: string, fallback: number) => {
+                const parseSize = (val: string, fallback: number): number => {
                     if (!val) return fallback;
-                    if (val.endsWith("vw")) return window.innerWidth;
-                    if (val.endsWith("vh")) return window.innerHeight;
+                    if (val.endsWith("vw")) return (parseFloat(val) / 100) * window.innerWidth;
+                    if (val.endsWith("vh")) return (parseFloat(val) / 100) * window.innerHeight;
                     return parseInt(val) || fallback;
                 };
 
@@ -217,6 +223,7 @@ export class Kernel {
         div.addEventListener("mousedown", (e: MouseEvent) => {
             const target = e.target as HTMLElement;
             if (target.dataset.resize) return;
+            if (!target.closest("[data-drag]")) return;
 
             isMouseDown = true;
             offsetX = e.clientX - div.getBoundingClientRect().left;

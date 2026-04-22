@@ -1,4 +1,4 @@
-(() => {
+﻿(() => {
     // ── Scope to this instance's container ────────────────────────────────────
     const currentScript = document.currentScript;
     const container = currentScript.parentElement;  // kernel's window div
@@ -7,39 +7,39 @@
     const feRoot = $('.fe-root');   // inner styling root, only used for window controls
 
     $('.fe-btn-close').onclick = () => container.remove();
-    $('.fe-btn-max').onclick   = () => feToggleMax();
-    $('.fe-btn-min').onclick   = () => feRestore();
+    $('.fe-btn-max').onclick = () => feToggleMax();
+    $('.fe-btn-min').onclick = () => feRestore();
 
     const fs = () => window.WebOS?.fs;
 
     // ── Window controls ────────────────────────────────────────────────────────
     let feIsMaximized = false;
-    let fePrevState = {};
+    let fePrevState = {}; 
 
     function feMaximize() {
         if (feIsMaximized) return;
         fePrevState = {
-            width:        container.style.width,
-            height:       container.style.height,
-            top:          container.style.top,
-            left:         container.style.left,
+            width: container.style.width,
+            height: container.style.height,
+            top: container.style.top,
+            left: container.style.left,
             borderRadius: feRoot.style.borderRadius
         };
         const screen = container.parentElement;
-        container.style.width  = screen.offsetWidth  + 'px';
+        container.style.width = screen.offsetWidth + 'px';
         container.style.height = screen.offsetHeight + 'px';
-        container.style.top    = '0';
-        container.style.left   = '0';
+        container.style.top = '0';
+        container.style.left = '0';
         feRoot.style.borderRadius = '0';
         feIsMaximized = true;
     }
 
     function feRestore() {
         if (!feIsMaximized) return;
-        container.style.width  = fePrevState.width;
+        container.style.width = fePrevState.width;
         container.style.height = fePrevState.height;
-        container.style.top    = fePrevState.top;
-        container.style.left   = fePrevState.left;
+        container.style.top = fePrevState.top;
+        container.style.left = fePrevState.left;
         feRoot.style.borderRadius = fePrevState.borderRadius || '';
         feIsMaximized = false;
     }
@@ -62,34 +62,34 @@
   </svg>`;
 
     const FOLDER_SM = `<svg viewBox="0 0 13 13" fill="none"><path d="M1 3A1 1 0 012 2h3.2L6 3h4.5A1 1 0 0111.5 4v6a1 1 0 01-1 1H2a1 1 0 01-1-1V3z" fill="currentColor" opacity="0.2"/><path d="M1 3A1 1 0 012 2h3.2L6 3h4.5A1 1 0 0111.5 4v6a1 1 0 01-1 1H2a1 1 0 01-1-1V3z" stroke="currentColor" stroke-width="1"/></svg>`;
-    const FILE_SM   = `<svg viewBox="0 0 13 13" fill="none"><path d="M2.5 1.5h5L10 4v7.5H2.5V1.5z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/><path d="M7.5 1.5V4H10" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>`;
+    const FILE_SM = `<svg viewBox="0 0 13 13" fill="none"><path d="M2.5 1.5h5L10 4v7.5H2.5V1.5z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/><path d="M7.5 1.5V4H10" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>`;
 
     // ── State ──────────────────────────────────────────────────────────────────
-    let currentPath  = '';
-    let navHistory   = [''];
+    let currentPath = '';
+    let navHistory = [''];
     let historyIndex = 0;
-    let viewMode     = 'grid';
+    let viewMode = 'grid';
     let selectedItem = null;
-    let ctxTarget    = null;
+    let ctxTarget = null;
 
     // ── DOM refs (all scoped to this instance) ─────────────────────────────────
-    const filesEl      = $('#fe-files');
+    const filesEl = $('#fe-files');
     const breadcrumbEl = $('#fe-breadcrumb');
-    const statusEl     = $('#fe-statusbar');
-    const modal        = $('#fe-modal');
-    const modalTitle   = $('#fe-modal-title');
-    const modalInput   = $('#fe-modal-input');
-    const modalCancel  = $('#fe-modal-cancel');
+    const statusEl = $('#fe-statusbar');
+    const modal = $('#fe-modal');
+    const modalTitle = $('#fe-modal-title');
+    const modalInput = $('#fe-modal-input');
+    const modalCancel = $('#fe-modal-cancel');
     const modalConfirm = $('#fe-modal-confirm');
-    const ctxMenu      = $('#fe-ctx-menu');
-    const sidebarTree  = $('#fe-sidebar-tree');
-    const sidebarHome  = $('#fe-sidebar-home');
-    const backBtn      = $('#fe-back');
-    const fwdBtn       = $('#fe-forward');
-    const gridViewBtn  = $('#fe-grid-view');
-    const listViewBtn  = $('#fe-list-view');
+    const ctxMenu = $('#fe-ctx-menu');
+    const sidebarTree = $('#fe-sidebar-tree');
+    const sidebarHome = $('#fe-sidebar-home');
+    const backBtn = $('#fe-back');
+    const fwdBtn = $('#fe-forward');
+    const gridViewBtn = $('#fe-grid-view');
+    const listViewBtn = $('#fe-list-view');
     const newFolderBtn = $('#fe-new-folder');
-    const newFileBtn   = $('#fe-new-file');
+    const newFileBtn = $('#fe-new-file');
 
     // ── Navigation ─────────────────────────────────────────────────────────────
     function navigate(path) {
@@ -132,9 +132,9 @@
 
     function renderNavBtns() {
         backBtn.style.opacity = historyIndex <= 0 ? '0.3' : '1';
-        fwdBtn.style.opacity  = historyIndex >= navHistory.length - 1 ? '0.3' : '1';
-        backBtn.style.cursor  = historyIndex <= 0 ? 'default' : 'pointer';
-        fwdBtn.style.cursor   = historyIndex >= navHistory.length - 1 ? 'default' : 'pointer';
+        fwdBtn.style.opacity = historyIndex >= navHistory.length - 1 ? '0.3' : '1';
+        backBtn.style.cursor = historyIndex <= 0 ? 'default' : 'pointer';
+        fwdBtn.style.cursor = historyIndex >= navHistory.length - 1 ? 'default' : 'pointer';
     }
 
     function renderBreadcrumb() {
@@ -144,7 +144,7 @@
         rootSeg.addEventListener('click', () => navigate(''));
         breadcrumbEl.appendChild(rootSeg);
         segs.forEach((seg, i) => {
-            const sep  = mkEl('span', 'fe-breadcrumb-sep', '/');
+            const sep = mkEl('span', 'fe-breadcrumb-sep', '/');
             const span = mkEl('span', 'fe-breadcrumb-seg', seg);
             const path = segs.slice(0, i + 1).join('/');
             span.addEventListener('click', () => navigate(path));
@@ -158,7 +158,7 @@
         filesEl.className = `fe-files ${viewMode}`;
         selectedItem = null;
 
-        const folder   = getCurrentFolder();
+        const folder = getCurrentFolder();
         const children = folder ? folder.children : [];
 
         if (children.length === 0) {
@@ -178,9 +178,9 @@
 
         sorted.forEach(child => {
             const isFolder = child.type === 'folder';
-            const ext      = isFolder ? '' : child.extName || '';
-            const label    = isFolder ? child.name : `${child.name}.${ext}`;
-            const item     = document.createElement('div');
+            const ext = isFolder ? '' : child.extName || '';
+            const label = isFolder ? child.name : `${child.name}.${ext}`;
+            const item = document.createElement('div');
 
             if (viewMode === 'grid') {
                 item.className = `fe-item ${isFolder ? 'folder' : 'file'}`;
@@ -193,14 +193,14 @@
                     <div class="fe-list-type">${isFolder ? 'folder' : ext || 'file'}</div>`;
             }
 
-            item.addEventListener('click',       (e) => { e.stopPropagation(); selectItem(item, child); });
-            item.addEventListener('dblclick',    ()  => openItem(child));
+            item.addEventListener('click', (e) => { e.stopPropagation(); selectItem(item, child); });
+            item.addEventListener('dblclick', () => openItem(child));
             item.addEventListener('contextmenu', (e) => showCtxMenu(e, child));
             filesEl.appendChild(item);
         });
 
         const folderCount = children.filter(c => c.type === 'folder').length;
-        const fileCount   = children.filter(c => c.type === 'file').length;
+        const fileCount = children.filter(c => c.type === 'file').length;
         statusEl.textContent = `${children.length} item${children.length !== 1 ? 's' : ''} — ${folderCount} folder${folderCount !== 1 ? 's' : ''}, ${fileCount} file${fileCount !== 1 ? 's' : ''}`;
     }
 
@@ -242,7 +242,7 @@
         ctxTarget = child;
         const rect = container.getBoundingClientRect();
         ctxMenu.style.left = `${e.clientX - rect.left}px`;
-        ctxMenu.style.top  = `${e.clientY - rect.top}px`;
+        ctxMenu.style.top = `${e.clientY - rect.top}px`;
         ctxMenu.classList.remove('hidden');
     }
 
@@ -287,14 +287,14 @@
         setTimeout(() => { modalInput.focus(); modalInput.select(); }, 30);
     }
 
-    modalCancel.addEventListener('click',  () => modal.classList.add('hidden'));
+    modalCancel.addEventListener('click', () => modal.classList.add('hidden'));
     modalConfirm.addEventListener('click', () => {
         const val = modalInput.value.trim();
         modal.classList.add('hidden');
         if (modalCallback && val) modalCallback(val);
     });
     modalInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter')  modalConfirm.click();
+        if (e.key === 'Enter') modalConfirm.click();
         if (e.key === 'Escape') modal.classList.add('hidden');
     });
 
@@ -310,8 +310,8 @@
     newFileBtn.addEventListener('click', () => {
         showModal('New File (name.ext)', 'untitled.txt', (inp) => {
             const parts = inp.split('.');
-            const ext   = parts.length > 1 ? parts.pop() : 'txt';
-            const name  = parts.join('.');
+            const ext = parts.length > 1 ? parts.pop() : 'txt';
+            const name = parts.join('.');
             const f = fs();
             if (f) f.addFile(name, ext, '', currentPath);
             render();
@@ -333,14 +333,14 @@
     });
 
     // ── Nav buttons ────────────────────────────────────────────────────────────
-    backBtn.addEventListener('click',    goBack);
-    fwdBtn.addEventListener('click',     goForward);
+    backBtn.addEventListener('click', goBack);
+    fwdBtn.addEventListener('click', goForward);
     sidebarHome.addEventListener('click', () => navigate(''));
 
     // ── Helper ─────────────────────────────────────────────────────────────────
     function mkEl(tag, cls, text) {
         const el = document.createElement(tag);
-        el.className   = cls;
+        el.className = cls;
         el.textContent = text;
         return el;
     }
@@ -355,8 +355,8 @@
             f.addFolder('Images');
             f.addFolder('Projects');
             f.addFile('readme', 'txt', 'Welcome to WebOS!', '');
-            f.addFile('notes',  'md',  '# Notes',           'Documents');
-            f.addFile('photo',  'png', '',                   'Images');
+            f.addFile('notes', 'md', '# Notes', 'Documents');
+            f.addFile('photo', 'png', '', 'Images');
             f.addFolder('MyApp', 'Projects');
         }
     }

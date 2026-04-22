@@ -62,8 +62,14 @@ export class Kernel {
             div.style.overflow = "clip";
             div.style.position = "absolute";
             div.className = openApp.name;
-            div.style.left = `${Math.random() * 100}%`;
-            div.style.top = `${Math.random() * 100}%`;
+            const parentW = this.parentElem.offsetWidth;
+            const parentH = this.parentElem.offsetHeight;
+            const appW = parseInt(openApp.width) || 300;
+            const appH = parseInt(openApp.height) || 200;
+            const maxLeft = Math.max(0, parentW - appW);
+            const maxTop = Math.max(0, parentH - appH);
+            div.style.left = `${Math.floor(Math.random() * maxLeft)}px`;
+            div.style.top = `${Math.floor(Math.random() * maxTop)}px`;
             if (openApp.resizable)
                 this.addResizeListener(div);
             if (openApp.addDragListener)
@@ -123,9 +129,9 @@ export class Kernel {
                     if (!val)
                         return fallback;
                     if (val.endsWith("vw"))
-                        return window.innerWidth;
+                        return (parseFloat(val) / 100) * window.innerWidth;
                     if (val.endsWith("vh"))
-                        return window.innerHeight;
+                        return (parseFloat(val) / 100) * window.innerHeight;
                     return parseInt(val) || fallback;
                 };
                 const maxW = parseSize(div.style.maxWidth, Infinity);
@@ -177,6 +183,8 @@ export class Kernel {
         div.addEventListener("mousedown", (e) => {
             const target = e.target;
             if (target.dataset.resize)
+                return;
+            if (!target.closest("[data-drag]"))
                 return;
             isMouseDown = true;
             offsetX = e.clientX - div.getBoundingClientRect().left;
