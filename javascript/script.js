@@ -94,4 +94,13 @@ function updateClock() {
 }
 updateClock();
 setInterval(updateClock, 10000);
+window.va = function () {
+    (window.vaq = window.vaq || []).push(arguments);
+};
+window.va('beforeSend', (event) => {
+    if (event.url.includes('/private')) {
+        return null;
+    }
+    return event;
+});
 console.log("--STARTING-OS--");
