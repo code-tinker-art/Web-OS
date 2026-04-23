@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
     // ── Scope ──────────────────────────────────────────────────────────────────
     const currentScript = document.currentScript;
     const container = currentScript.parentElement;
@@ -67,11 +67,18 @@
 
     // ── Output helpers ─────────────────────────────────────────────────────────
     function printLine(content, type = 'out') {
+        let isHTML = false;
+        if (/span/.test(content))
+            isHTML = true;
+
         const line = document.createElement('div');
         line.className = 'sh-line';
         const span = document.createElement('span');
         span.className = `sh-line-${type}`;
-        span.innerHTML = content;
+        if (isHTML)
+            span.innerHTML = content;
+        else
+            span.textContent = content;
         line.appendChild(span);
         outputEl.appendChild(line);
         scrollBottom();
