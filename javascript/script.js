@@ -2,7 +2,18 @@ import { Kernel } from "./kernel.js";
 import { apps } from "./apps.js";
 import { FileSystem_WebOS } from "./file_system.js";
 import { inject } from "@vercel/analytics";
-inject();
+
+// Initialize Vercel Web Analytics
+inject({
+    mode: 'auto',
+    beforeSend: (event) => {
+        // Filter out private URLs from analytics
+        if (event.url.includes('/private')) {
+            return null;
+        }
+        return event;
+    }
+});
 const kernel = new Kernel(".screen");
 const fs = new FileSystem_WebOS();
 window.WebOS = { kernel, fs };
@@ -96,13 +107,5 @@ function updateClock() {
 }
 updateClock();
 setInterval(updateClock, 10000);
-window.va = function () {
-    (window.vaq = window.vaq || []).push(arguments);
-};
-window.va('beforeSend', (event) => {
-    if (event.url.includes('/private')) {
-        return null;
-    }
-    return event;
-});
+
 console.log("--STARTING-OS--");
