@@ -2,6 +2,13 @@
 import { apps } from "./apps.js";
 import { FileSystem_WebOS } from "./file_system.js"
 
+//---------VERCEL---ANALYTICS---------
+import { inject } from "@vercel/analytics"
+
+inject()
+//------------------------------------
+
+
 const kernel = new Kernel(".screen");
 const fs: FileSystem_WebOS = new FileSystem_WebOS();
 (window as any).WebOS = { kernel, fs };
