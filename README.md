@@ -7,7 +7,7 @@ A browser-based, OS-like environment built with **HTML**, **CSS**, **TypeScript*
 ## 📸 Preview
 
 > A windowed, taskbar-driven UI that mimics a desktop operating system — entirely in the browser.
-> [Preview of Web-OS](https://web-os-eight-psi.vercel.app/){:target="_blank"}
+> <a href="https://web-os-eight-psi.vercel.app/" target="_blank" rel="noopener noreferrer">Link Text</a>
 
 ---
 
