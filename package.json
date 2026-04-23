@@ -1,0 +1,24 @@
+{
+  "name": "web-os",
+  "version": "1.0.0",
+  "description": "OS like environment in the browser",
+  "main": "server.js",
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "node server",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/code-tinker-art/web-os.git"
+  },
+  "author": "S.S.Magizhnun",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/code-tinker-art/web-os/issues"
+  },
+  "homepage": "https://github.com/code-tinker-art/web-os#readme"
+}
