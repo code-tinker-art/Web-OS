@@ -3,7 +3,7 @@ import { apps } from "./apps.js";
 import { FileSystem_WebOS } from "./file_system.js"
 
 //---------VERCEL---ANALYTICS---------
-import { inject } from "@vercel/analytics"
+import { inject } from "./vercel/analytics"
 
 inject()
 //------------------------------------
