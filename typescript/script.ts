@@ -59,6 +59,7 @@ const APP_ICONS: Record<string, string> = {
     "shell": "⌨",
     "file explorer": "📁",
     "tester app": "🧪",
+    "filepad": "📄"
 };
 
 function buildStartMenu() {

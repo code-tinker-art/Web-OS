@@ -1,4 +1,5 @@
 import { AppManager } from "./appManager.js"
+
 export interface App {
     name: string,
     width: string,
@@ -7,11 +8,9 @@ export interface App {
     minHeight: string,
     maxWidth: string,
     maxHeight: string,
-
     htmlPath: string,
     cssPath: string,
     jsPath: string,
-
     classId: string,
     addDragListener: boolean,
     resizable: boolean
@@ -43,10 +42,8 @@ export class Kernel {
     registerApp(app: App) {
         if (!this.alreadyHasAppDetails(app))
             this.appAndDetails.push(app);
-
         if (!this.apps.includes(app.name))
             this.apps.push(app.name);
-
         this.saveToDisk();
     }
 
@@ -64,7 +61,7 @@ export class Kernel {
         this.saveToDisk();
     }
 
-    open(appName: string) {
+    open(appName: string, context: Record<string, any> | null = null) {
         setTimeout(() => {
             if (!this.apps.includes(appName)) {
                 console.error("App doesn't exist");
@@ -77,6 +74,8 @@ export class Kernel {
             }
             if (openApp === null) { console.error("App not found!!"); return; }
 
+            if (context) (window as any).WebOS.openContext = context;
+
             const div = document.createElement("div");
             div.style.height = openApp.height;
             div.style.width = openApp.width;
@@ -84,6 +83,7 @@ export class Kernel {
             div.style.maxHeight = openApp.maxHeight;
             div.style.minWidth = openApp.minWidth;
             div.style.minHeight = openApp.minHeight;
+            div.style.zIndex = String(this.index);
             div.style.overflow = "clip";
             div.style.position = "absolute";
             div.className = openApp.name;
@@ -106,10 +106,11 @@ export class Kernel {
                 if (openApp!.resizable) {
                     div.querySelectorAll("[data-resize]").forEach(h => div.appendChild(h));
                 }
+                if (context) (window as any).WebOS.openContext = null;
             });
 
             this.parentElem.appendChild(div);
-        }, 300)
+        }, 300);
     }
 
     addIndexIncrementation(div: HTMLDivElement) {
@@ -173,9 +174,7 @@ export class Kernel {
                 const onMouseMove = (e: MouseEvent) => {
                     const dx = e.clientX - startX;
                     const dy = e.clientY - startY;
-
                     let newW = startW, newH = startH, newL = startL, newT = startT;
-
                     if (position.includes("right")) newW = Math.min(maxW, Math.max(minW, startW + dx));
                     if (position.includes("bottom")) newH = Math.min(maxH, Math.max(minH, startH + dy));
                     if (position.includes("left")) {
@@ -186,7 +185,6 @@ export class Kernel {
                         newH = Math.min(maxH, Math.max(minH, startH - dy));
                         newT = startT + (startH - newH);
                     }
-
                     div.style.width = `${newW}px`;
                     div.style.height = `${newH}px`;
                     div.style.left = `${newL}px`;

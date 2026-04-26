@@ -35,7 +35,7 @@ export class Kernel {
         this.apps = this.apps.filter(app => app !== appName);
         this.saveToDisk();
     }
-    open(appName) {
+    open(appName, context = null) {
         setTimeout(() => {
             if (!this.apps.includes(appName)) {
                 console.error("App doesn't exist");
@@ -52,6 +52,8 @@ export class Kernel {
                 console.error("App not found!!");
                 return;
             }
+            if (context)
+                window.WebOS.openContext = context;
             const div = document.createElement("div");
             div.style.height = openApp.height;
             div.style.width = openApp.width;
@@ -59,6 +61,7 @@ export class Kernel {
             div.style.maxHeight = openApp.maxHeight;
             div.style.minWidth = openApp.minWidth;
             div.style.minHeight = openApp.minHeight;
+            div.style.zIndex = String(this.index);
             div.style.overflow = "clip";
             div.style.position = "absolute";
             div.className = openApp.name;
@@ -79,6 +82,8 @@ export class Kernel {
                 if (openApp.resizable) {
                     div.querySelectorAll("[data-resize]").forEach(h => div.appendChild(h));
                 }
+                if (context)
+                    window.WebOS.openContext = null;
             });
             this.parentElem.appendChild(div);
         }, 300);

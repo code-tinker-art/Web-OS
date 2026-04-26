@@ -51,6 +51,7 @@ const APP_ICONS = {
     "shell": "⌨",
     "file explorer": "📁",
     "tester app": "🧪",
+    "filepad": "📄"
 };
 function buildStartMenu() {
     startApps.innerHTML = "";

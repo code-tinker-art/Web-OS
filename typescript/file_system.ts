@@ -18,6 +18,10 @@ export class Folder {
     add(newElement: Entity) {
         this.children.push(newElement);
     }
+
+    has(name: string): boolean {
+        return this.children.some(c => c.name === name);
+    }
 }
 
 export class FileSystem_WebOS {
@@ -69,18 +73,19 @@ export class FileSystem_WebOS {
 
     addFile(name = "", ext = "", content = "", directory = "") {
         const folder = this.travelTo(directory);
-        if (folder) {
+        if (!folder) return;
+        if (!folder.has(name)) {
             folder.add(new File(name, ext, content));
             this.saveToDisk();
+        } else {
+            console.error("File already exists");
         }
     }
 
     addFolder(name = "", directory = "") {
         const folder = this.travelTo(directory);
         if (!folder) return;
-
-        const exists = folder.children.some(f => f.type === "folder" && f.name === name);
-        if (!exists) {
+        if (!folder.has(name)) {
             folder.add(new Folder(name));
             this.saveToDisk();
         } else {
@@ -110,5 +115,19 @@ export class FileSystem_WebOS {
             current = next;
         }
         return current;
+    }
+
+    getFile(path = ""): File | null {
+        const parts = path.split("/").filter(p => p !== "");
+        const fileName = parts.pop();
+        if (!fileName) return null;
+
+        const folder = this.travelTo(parts.join("/"));
+        if (!folder) return null;
+
+        const file = folder.children.find(
+            c => c.type === "file" && (c.name === fileName || `${c.name}.${(c as File).extName}` === fileName)
+        );
+        return file ? (file as File) : null;
     }
 }

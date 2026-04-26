@@ -1,4 +1,4 @@
-(() => {
+﻿(() => {
     // ── Scope ──────────────────────────────────────────────────────────────────
     const currentScript = document.currentScript;
     const container = currentScript.parentElement;
