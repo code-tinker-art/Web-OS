@@ -1,57 +1,76 @@
 ﻿<div class="fp-root">
+
+    <!-- Titlebar -->
     <div class="fp-titlebar" data-drag>
         <div class="fp-titlebar-left">
             <div class="fp-btn fp-btn-close"></div>
             <div class="fp-btn fp-btn-min"></div>
             <div class="fp-btn fp-btn-max"></div>
         </div>
-        <div class="fp-titlebar-center">
-            <span>Filepad</span>
-        </div>
+        <div class="fp-titlebar-center">Filepad</div>
         <div class="fp-titlebar-right"></div>
     </div>
 
-    <div class="fp-toolbar">
-        <button class="fp-tool-btn" id="fp-btn-new" title="New Tab (Ctrl+N)">
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 1.5h5.5L11 5v6.5H2V1.5z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round" /><path d="M7.5 1.5V5H11" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round" /><path d="M4.5 7.5h4M4.5 9.5h2.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" /></svg>
-            New
-        </button>
-        <button class="fp-tool-btn" id="fp-btn-open-file" title="Open File">
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1 3.5A1 1 0 012 2.5h3L6 4h5.5a1 1 0 011 1v5.5a1 1 0 01-1 1H2a1 1 0 01-1-1V3.5z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round" /></svg>
-            Open
-        </button>
-        <button class="fp-tool-btn" id="fp-btn-open-folder" title="Toggle Sidebar">
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1 3.5A1 1 0 012 2.5h3L6 4h5.5a1 1 0 011 1v5.5a1 1 0 01-1 1H2a1 1 0 01-1-1V3.5z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round" /><path d="M4.5 7l2 2 2-2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" /></svg>
-            Folder
-        </button>
-        <div class="fp-toolbar-sep"></div>
-        <button class="fp-tool-btn fp-tool-btn--save" id="fp-btn-save" title="Save (Ctrl+S)">
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 1.5h7.5L11.5 4v7.5H2V1.5z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round" /><path d="M4.5 1.5v3h4v-3" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round" /><rect x="3" y="7" width="7" height="4.5" rx="0.5" stroke="currentColor" stroke-width="1.1" /></svg>
-            Save
-        </button>
-    </div>
+    <!-- Main layout: activity bar | sidebar | editor -->
+    <div class="fp-layout">
 
-    <div class="fp-tab-bar" id="fp-tab-bar"></div>
-
-    <div class="fp-layout" id="fp-layout">
-        <div class="fp-sidebar hidden" id="fp-sidebar">
-            <div class="fp-sidebar-header">EXPLORER</div>
-            <div class="fp-sidebar-tree" id="fp-sidebar-tree"></div>
+        <!-- Activity bar (icon rail on far left, like VS Code) -->
+        <div class="fp-activity-bar">
+            <button class="fp-activity-btn active" id="fp-act-explorer" title="Explorer">
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                    <path d="M4 4h6l2 2h6v12H4V4z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" />
+                    <path d="M4 9h14" stroke="currentColor" stroke-width="1.3" />
+                </svg>
+            </button>
+            <button class="fp-activity-btn" id="fp-act-new" title="New File (Ctrl+N)">
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                    <path d="M5 3h8l4 4v12H5V3z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" />
+                    <path d="M13 3v4h4" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" />
+                    <path d="M9 12v5M6.5 14.5h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+                </svg>
+            </button>
+            <button class="fp-activity-btn" id="fp-act-save" title="Save (Ctrl+S)">
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                    <path d="M4 3h11l3 3v13H4V3z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" />
+                    <path d="M7 3v5h8V3" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" />
+                    <rect x="6" y="13" width="10" height="6" rx="0.5" stroke="currentColor" stroke-width="1.3" />
+                </svg>
+            </button>
         </div>
-        <div class="fp-editor-area">
+
+        <!-- Sidebar (explorer panel) -->
+        <div class="fp-sidebar" id="fp-sidebar">
+            <div class="fp-sidebar-title">
+                <span id="fp-sidebar-folder-name">NO FOLDER OPENED</span>
+                <div class="fp-sidebar-actions">
+                    <button class="fp-sidebar-action-btn" id="fp-sidebar-refresh" title="Refresh">↻</button>
+                    <button class="fp-sidebar-action-btn" id="fp-sidebar-close-folder" title="Close Folder">✕</button>
+                </div>
+            </div>
+            <div id="fp-sidebar-body">
+                <!-- Either the "open folder" prompt or the tree -->
+            </div>
+        </div>
+
+        <!-- Editor column: tabs + body -->
+        <div class="fp-editor-col">
+            <div class="fp-tab-bar" id="fp-tab-bar"></div>
             <div class="fp-body" id="fp-body"></div>
         </div>
+
     </div>
 
+    <!-- Statusbar -->
     <div class="fp-statusbar">
         <span id="fp-status-text">Ready</span>
         <span id="fp-status-type"></span>
     </div>
 
+    <!-- Save-as modal -->
     <div class="fp-modal hidden" id="fp-save-modal">
         <div class="fp-modal-box">
             <div class="fp-modal-title">Save File</div>
-            <label class="fp-modal-label">Directory (leave blank for root)</label>
+            <label class="fp-modal-label">Directory (blank = root)</label>
             <input class="fp-modal-input" id="fp-save-dir" placeholder="e.g. Documents" autocomplete="off" spellcheck="false" />
             <label class="fp-modal-label">Filename</label>
             <input class="fp-modal-input" id="fp-save-name" placeholder="e.g. notes.txt" autocomplete="off" spellcheck="false" />
@@ -63,10 +82,11 @@
         </div>
     </div>
 
+    <!-- Unsaved-changes warning modal -->
     <div class="fp-modal hidden" id="fp-warn-modal">
         <div class="fp-modal-box">
             <div class="fp-modal-title">Unsaved Changes</div>
-            <div class="fp-modal-sub">Save before closing?</div>
+            <div class="fp-modal-sub" id="fp-warn-sub">Save changes before closing?</div>
             <div class="fp-modal-row">
                 <button class="fp-modal-btn secondary" id="fp-warn-cancel">Cancel</button>
                 <button class="fp-modal-btn danger" id="fp-warn-discard">Don't Save</button>
@@ -74,4 +94,5 @@
             </div>
         </div>
     </div>
+
 </div>

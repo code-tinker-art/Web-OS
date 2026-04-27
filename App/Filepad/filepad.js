@@ -8,13 +8,16 @@
     const body = $('#fp-body');
     const statusTxt = $('#fp-status-text');
     const statusTyp = $('#fp-status-type');
+    const statusBar = container.querySelector('.fp-statusbar');
     const sidebar = $('#fp-sidebar');
-    const sideTree = $('#fp-sidebar-tree');
+    const sideBody = $('#fp-sidebar-body');
+    const sideFolderNm = $('#fp-sidebar-folder-name');
     const saveModal = $('#fp-save-modal');
     const warnModal = $('#fp-warn-modal');
     const saveDir = $('#fp-save-dir');
     const saveName = $('#fp-save-name');
     const saveErr = $('#fp-save-err');
+    const warnSub = $('#fp-warn-sub');
 
     const fs = () => window.WebOS?.fs;
     const kernel = () => window.WebOS?.kernel;
@@ -53,96 +56,74 @@
     const isImageExt = (ext) => IMAGE_EXTS.has((ext || '').toLowerCase());
 
     // ── Tab state ──────────────────────────────────────────────────────────────
-    // Each tab: { id, fileRef, untitledText, isDirty, scrollTop, selStart, selEnd }
     let tabs = [];
     let activeTab = null;
     let tabIdSeq = 0;
 
     function createTab(fileRef = null) {
-        const tab = {
-            id: tabIdSeq++,
-            fileRef,
-            untitledText: '',
-            isDirty: false,
-            scrollTop: 0,
-            selStart: 0,
-            selEnd: 0,
-        };
+        const tab = { id: tabIdSeq++, fileRef, untitledText: '', isDirty: false, scrollTop: 0 };
         tabs.push(tab);
         return tab;
     }
 
     function switchTo(tab) {
-        // Save scroll/cursor of current active tab before switching
         if (activeTab) {
             const ta = body.querySelector('.fp-textarea');
-            if (ta) {
-                activeTab.scrollTop = ta.scrollTop;
-                activeTab.selStart = ta.selectionStart;
-                activeTab.selEnd = ta.selectionEnd;
-            }
+            if (ta) activeTab.scrollTop = ta.scrollTop;
         }
         activeTab = tab;
         renderTabs();
         renderBody();
+        refreshSidebarActive();
     }
 
     function closeTab(tab) {
         const idx = tabs.indexOf(tab);
+        if (idx === -1) return;
         tabs.splice(idx, 1);
         if (tabs.length === 0) {
-            // Open a fresh untitled when last tab is closed
             const t = createTab(null);
             switchTo(t);
         } else {
-            const next = tabs[Math.min(idx, tabs.length - 1)];
-            switchTo(next);
+            switchTo(tabs[Math.min(idx, tabs.length - 1)]);
         }
     }
 
-    // ── Tab bar rendering ──────────────────────────────────────────────────────
+    // ── Tab bar ────────────────────────────────────────────────────────────────
     function renderTabs() {
         tabBar.innerHTML = '';
         tabs.forEach(tab => {
             const el = document.createElement('div');
             el.className = 'fp-tab' + (tab === activeTab ? ' active' : '');
 
-            const nameSpan = document.createElement('span');
-            nameSpan.className = 'fp-tab-name';
-            nameSpan.textContent = tabLabel(tab);
+            const dirty = document.createElement('span');
+            dirty.className = 'fp-tab-dirty' + (tab.isDirty ? ' visible' : '');
 
-            const dot = document.createElement('span');
-            dot.className = 'fp-tab-dirty' + (tab.isDirty ? ' visible' : '');
-            dot.title = 'Unsaved';
+            const name = document.createElement('span');
+            name.className = 'fp-tab-name';
+            name.textContent = tabLabel(tab);
 
-            const closeBtn = document.createElement('span');
-            closeBtn.className = 'fp-tab-close';
-            closeBtn.textContent = '×';
-            closeBtn.title = 'Close';
-            closeBtn.addEventListener('click', (e) => {
+            const cls = document.createElement('span');
+            cls.className = 'fp-tab-close';
+            cls.textContent = '×';
+            cls.title = 'Close tab';
+            cls.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (tab.isDirty) {
-                    showWarnModal(tab, () => closeTab(tab));
-                } else {
-                    closeTab(tab);
-                }
+                if (tab.isDirty) showWarnModal(tab, () => closeTab(tab));
+                else closeTab(tab);
             });
 
-            el.append(dot, nameSpan, closeBtn);
+            el.append(dirty, name, cls);
             el.addEventListener('click', () => switchTo(tab));
             tabBar.appendChild(el);
         });
 
-        // "+" new tab button
-        const addBtn = document.createElement('div');
-        addBtn.className = 'fp-tab-add';
-        addBtn.textContent = '+';
-        addBtn.title = 'New tab';
-        addBtn.addEventListener('click', () => {
-            const t = createTab(null);
-            switchTo(t);
-        });
-        tabBar.appendChild(addBtn);
+        const add = document.createElement('div');
+        add.className = 'fp-tab-add';
+        add.textContent = '+';
+        add.title = 'New tab (Ctrl+N)';
+        add.addEventListener('click', () => { const t = createTab(null); switchTo(t); });
+        tabBar.appendChild(add);
     }
 
     function tabLabel(tab) {
@@ -150,14 +131,13 @@
         return `${tab.fileRef.name}.${tab.fileRef.extName}`;
     }
 
-    // ── Body rendering ─────────────────────────────────────────────────────────
+    // ── Body ───────────────────────────────────────────────────────────────────
     function renderBody() {
+        body.innerHTML = '';
         if (!activeTab) return;
         const tab = activeTab;
-        const ext = tab.fileRef ? (tab.fileRef.extName || '').toLowerCase() : 'txt';
-
-        // Update titlebar icon & status type
-        statusTyp.textContent = ext.toUpperCase() || 'TXT';
+        const ext = tab.fileRef ? (tab.fileRef.extName || '').toLowerCase() : '';
+        statusTyp.textContent = (ext || 'plain').toUpperCase();
 
         if (!tab.fileRef) {
             renderTextEditor(tab);
@@ -168,62 +148,76 @@
         }
     }
 
-    // ── Text editor ────────────────────────────────────────────────────────────
+    // ── Text editor with line numbers ──────────────────────────────────────────
     function renderTextEditor(tab) {
-        body.innerHTML = '';
+        const wrap = document.createElement('div');
+        wrap.className = 'fp-editor-wrap';
+
+        const lineNums = document.createElement('div');
+        lineNums.className = 'fp-line-numbers';
+
         const ta = document.createElement('textarea');
         ta.className = 'fp-textarea';
         ta.value = tab.fileRef ? (tab.fileRef.content || '') : tab.untitledText;
         ta.spellcheck = false;
-        ta.scrollTop = tab.scrollTop;
 
-        updateTextStatus(ta.value);
+        function updateLineNumbers() {
+            const count = ta.value.split('\n').length;
+            lineNums.innerHTML = Array.from({ length: count }, (_, i) => i + 1).join('<br>');
+        }
+        updateLineNumbers();
+        updateStatus(ta.value);
 
         ta.addEventListener('input', () => {
-            if (tab.fileRef) {
-                tab.fileRef.content = ta.value;
-            } else {
-                tab.untitledText = ta.value;
-            }
+            if (tab.fileRef) tab.fileRef.content = ta.value;
+            else tab.untitledText = ta.value;
+            updateLineNumbers();
+            updateStatus(ta.value);
             markDirty(tab);
-            updateTextStatus(ta.value);
         });
 
-        body.appendChild(ta);
-        ta.focus();
-        try { ta.setSelectionRange(tab.selStart, tab.selEnd); } catch (_) { }
+        ta.addEventListener('scroll', () => { lineNums.scrollTop = ta.scrollTop; });
+
+        ta.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const s = ta.selectionStart, end = ta.selectionEnd;
+                ta.value = ta.value.substring(0, s) + '    ' + ta.value.substring(end);
+                ta.selectionStart = ta.selectionEnd = s + 4;
+                ta.dispatchEvent(new Event('input'));
+            }
+        });
+
+        wrap.append(lineNums, ta);
+        body.appendChild(wrap);
+
+        requestAnimationFrame(() => {
+            ta.scrollTop = tab.scrollTop;
+            ta.focus();
+        });
     }
 
-    function updateTextStatus(text) {
-        const lines = text ? text.split('\n').length : 0;
+    function updateStatus(text) {
+        const lines = text ? text.split('\n').length : 1;
         const chars = text ? text.length : 0;
-        statusTxt.textContent = `${lines} line${lines !== 1 ? 's' : ''} · ${chars} char${chars !== 1 ? 's' : ''}`;
+        statusTxt.textContent = `Ln ${lines}, Col 1  ·  ${chars} chars`;
     }
 
     function flashSaved() {
-        statusTxt.classList.remove('fp-saved');
-        void statusTxt.offsetWidth;
-        statusTxt.classList.add('fp-saved');
+        statusBar.classList.remove('saved');
+        void statusBar.offsetWidth;
+        statusBar.classList.add('saved');
+        setTimeout(() => statusBar.classList.remove('saved'), 1200);
     }
 
-    // ── Dirty tracking ─────────────────────────────────────────────────────────
-    function markDirty(tab) {
-        tab.isDirty = true;
-        renderTabs();
-    }
-    function markClean(tab) {
-        tab.isDirty = false;
-        renderTabs();
-    }
+    // ── Dirty ──────────────────────────────────────────────────────────────────
+    function markDirty(tab) { tab.isDirty = true; renderTabs(); }
+    function markClean(tab) { tab.isDirty = false; renderTabs(); }
 
-    // ── Image renderer ─────────────────────────────────────────────────────────
+    // ── Image ──────────────────────────────────────────────────────────────────
     function renderImage(tab) {
-        body.innerHTML = '';
-        if (tab.fileRef.content) {
-            renderImageContent(tab.fileRef.content, tab.fileRef.extName);
-        } else {
-            renderImageImport(tab.fileRef);
-        }
+        if (tab.fileRef.content) renderImageContent(tab.fileRef.content, tab.fileRef.extName);
+        else renderImageImport(tab.fileRef);
     }
 
     function renderImageContent(base64, ext) {
@@ -234,58 +228,51 @@
         const mime = ext === 'svg' ? 'image/svg+xml' : `image/${ext}`;
         img.src = base64.startsWith('data:') ? base64 : `data:${mime};base64,${base64}`;
         img.onload = () => { statusTxt.textContent = `${img.naturalWidth} × ${img.naturalHeight}px`; };
-        img.onerror = () => { statusTxt.textContent = 'Failed to render image'; };
+        img.onerror = () => { statusTxt.textContent = 'Failed to render'; };
         viewer.appendChild(img);
         body.appendChild(viewer);
     }
 
     function renderImageImport(fileObj) {
         body.innerHTML = '';
-        const wrap = document.createElement('div');
-        wrap.className = 'fp-img-import';
+        const outer = document.createElement('div');
+        outer.className = 'fp-img-import';
+        const inner = document.createElement('div');
+        inner.className = 'fp-img-import-inner';
 
         const icon = document.createElement('div');
-        icon.className = 'fp-img-import-icon';
-        icon.textContent = '⚠';
-
+        icon.className = 'fp-img-import-icon'; icon.textContent = '⚠';
         const title = document.createElement('div');
-        title.className = 'fp-img-import-title';
-        title.textContent = 'NO IMAGE DATA';
+        title.className = 'fp-img-import-title'; title.textContent = 'NO IMAGE DATA';
 
         const dropZone = document.createElement('div');
         dropZone.className = 'fp-drop-zone';
-        dropZone.innerHTML = `<span class="fp-drop-icon">⊕</span><span class="fp-drop-label">Drop image here or Ctrl+V to paste</span>`;
+        dropZone.innerHTML = `<span style="font-size:20px;opacity:0.3">⊕</span><span class="fp-drop-label">Drop image here · Ctrl+V to paste</span>`;
 
         const divider = document.createElement('div');
-        divider.className = 'fp-import-divider';
-        divider.textContent = 'or import from FS path';
+        divider.className = 'fp-import-divider'; divider.textContent = 'or import from FS path';
 
         const row = document.createElement('div');
         row.className = 'fp-img-import-row';
-
         const fsInput = document.createElement('input');
-        fsInput.className = 'fp-img-url-input';
-        fsInput.placeholder = 'e.g. Images/photo.png';
-        fsInput.autocomplete = 'off';
-        fsInput.spellcheck = false;
-
+        fsInput.className = 'fp-img-url-input'; fsInput.placeholder = 'e.g. Images/photo.png';
+        fsInput.autocomplete = 'off'; fsInput.spellcheck = false;
         const importBtn = document.createElement('button');
-        importBtn.className = 'fp-img-import-btn';
-        importBtn.textContent = 'Import';
+        importBtn.className = 'fp-img-import-btn'; importBtn.textContent = 'Import';
+        row.append(fsInput, importBtn);
 
         const errMsg = document.createElement('div');
         errMsg.className = 'fp-img-err-msg';
 
-        row.append(fsInput, importBtn);
-        wrap.append(icon, title, dropZone, divider, row, errMsg);
-        body.appendChild(wrap);
+        inner.append(icon, title, dropZone, divider, row, errMsg);
+        outer.appendChild(inner);
+        body.appendChild(outer);
         statusTxt.textContent = 'No image data';
 
         function saveAndRender(base64) {
             fileObj.content = base64;
             fs()?.saveToDisk();
-            markClean(activeTab);
-            errMsg.textContent = '';
+            if (activeTab) markClean(activeTab);
             renderImageContent(base64, fileObj.extName);
         }
         function showErr(msg) { errMsg.textContent = msg; }
@@ -293,11 +280,10 @@
         dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('fp-drop-zone--over'); });
         dropZone.addEventListener('dragleave', () => dropZone.classList.remove('fp-drop-zone--over'));
         dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('fp-drop-zone--over');
+            e.preventDefault(); dropZone.classList.remove('fp-drop-zone--over');
             const file = e.dataTransfer?.files[0];
             if (!file) return showErr('No file dropped');
-            if (!file.type.startsWith('image/')) return showErr('Not an image');
+            if (!file.type.startsWith('image/')) return showErr('Not an image file');
             blobToBase64(file).then(saveAndRender).catch(() => showErr('Failed to read file'));
         });
 
@@ -317,11 +303,11 @@
         function doFsImport() {
             const val = fsInput.value.trim();
             if (!val) return;
-            const srcFile = fs()?.getFile(val);
-            if (!srcFile) return showErr(`Not found: ${val}`);
-            if (!srcFile.content) return showErr('Source has no content');
+            const src = fs()?.getFile(val);
+            if (!src) return showErr(`Not found: ${val}`);
+            if (!src.content) return showErr('Source file has no content');
             container.removeEventListener('paste', onPaste);
-            saveAndRender(srcFile.content);
+            saveAndRender(src.content);
         }
         importBtn.onclick = doFsImport;
         fsInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doFsImport(); });
@@ -329,21 +315,17 @@
 
     function blobToBase64(blob) {
         return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = () => reject(new Error('FileReader error'));
-            reader.readAsDataURL(blob);
+            const r = new FileReader();
+            r.onload = () => resolve(r.result);
+            r.onerror = () => reject(new Error('FileReader error'));
+            r.readAsDataURL(blob);
         });
     }
 
     // ── Save ───────────────────────────────────────────────────────────────────
     function save(tab, afterSave) {
-        if (!tab) tab = activeTab;
         if (!tab) return;
-        if (!tab.fileRef) {
-            showSaveModal(tab, afterSave);
-            return;
-        }
+        if (!tab.fileRef) { showSaveModal(tab, afterSave); return; }
         fs()?.saveToDisk();
         markClean(tab);
         flashSaved();
@@ -351,212 +333,278 @@
     }
 
     // ── Save-as modal ──────────────────────────────────────────────────────────
-    let saveModalCallback = null;
+    let saveModalCb = null;
     let saveModalTab = null;
 
     function showSaveModal(tab, cb) {
         saveErr.textContent = '';
-        saveDir.value = '';
-        saveName.value = '';
-        saveModalTab = tab;
-        saveModalCallback = cb || null;
+        saveDir.value = ''; saveName.value = '';
+        saveModalTab = tab; saveModalCb = cb || null;
         saveModal.classList.remove('hidden');
         setTimeout(() => saveName.focus(), 30);
     }
 
     function doSaveAs() {
         const dir = saveDir.value.trim();
-        const name = saveName.value.trim();
-        if (!name) { saveErr.textContent = 'Filename required'; return; }
-
-        const parts = name.split('.');
+        const raw = saveName.value.trim();
+        if (!raw) { saveErr.textContent = 'Filename is required'; return; }
+        const parts = raw.split('.');
         const ext = parts.length > 1 ? parts.pop() : 'txt';
-        const baseName = parts.join('.');
+        const base = parts.join('.');
         const f = fs();
         if (!f) { saveErr.textContent = 'Filesystem unavailable'; return; }
-
         const folder = f.travelTo(dir);
-        if (!folder) { saveErr.textContent = `Directory not found: ${dir || '(root)'}`; return; }
-        if (folder.has(baseName)) { saveErr.textContent = 'File already exists'; return; }
-
-        f.addFile(baseName, ext, saveModalTab.untitledText, dir);
-        const path = dir ? `${dir}/${baseName}.${ext}` : `${baseName}.${ext}`;
+        if (!folder) { saveErr.textContent = `Directory not found: ${dir || 'root'}`; return; }
+        if (folder.has(base)) { saveErr.textContent = 'File already exists'; return; }
+        f.addFile(base, ext, saveModalTab.untitledText, dir);
+        const path = dir ? `${dir}/${base}.${ext}` : `${base}.${ext}`;
         saveModalTab.fileRef = f.getFile(path);
-
         saveModal.classList.add('hidden');
         markClean(saveModalTab);
         statusTyp.textContent = ext.toUpperCase();
         flashSaved();
-        if (saveModalCallback) { saveModalCallback(); saveModalCallback = null; }
+        renderTabs();
+        renderSidebarTree();
+        if (saveModalCb) { saveModalCb(); saveModalCb = null; }
         saveModalTab = null;
     }
 
     $('#fp-save-confirm').onclick = doSaveAs;
-    $('#fp-save-cancel').onclick = () => { saveModal.classList.add('hidden'); saveModalCallback = null; saveModalTab = null; };
+    $('#fp-save-cancel').onclick = () => { saveModal.classList.add('hidden'); saveModalCb = null; saveModalTab = null; };
     saveDir.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveName.focus(); });
     saveName.addEventListener('keydown', (e) => { if (e.key === 'Enter') doSaveAs(); if (e.key === 'Escape') saveModal.classList.add('hidden'); });
 
-    // ── Unsaved warning modal ──────────────────────────────────────────────────
-    let warnCallback = null;
+    // ── Warn modal ─────────────────────────────────────────────────────────────
+    let warnCb = null;
     let warnTab = null;
 
     function showWarnModal(tab, afterAction) {
-        warnTab = tab;
-        warnCallback = afterAction;
+        warnTab = tab; warnCb = afterAction;
+        warnSub.textContent = `"${tabLabel(tab)}" has unsaved changes. Save before closing?`;
         warnModal.classList.remove('hidden');
     }
 
-    $('#fp-warn-cancel').onclick = () => { warnModal.classList.add('hidden'); warnCallback = null; warnTab = null; };
+    $('#fp-warn-cancel').onclick = () => { warnModal.classList.add('hidden'); warnCb = null; warnTab = null; };
     $('#fp-warn-discard').onclick = () => {
         warnModal.classList.add('hidden');
-        const cb = warnCallback; warnCallback = null; warnTab = null;
+        const cb = warnCb; warnCb = null; warnTab = null;
         if (cb) cb();
     };
     $('#fp-warn-save').onclick = () => {
         warnModal.classList.add('hidden');
-        const tab = warnTab;
-        const cb = warnCallback;
-        warnCallback = null; warnTab = null;
+        const tab = warnTab; const cb = warnCb;
+        warnCb = null; warnTab = null;
         save(tab, cb);
     };
 
-    // Close all — check for any dirty tab
     function attemptCloseAll() {
-        const dirtyTabs = tabs.filter(t => t.isDirty);
-        if (dirtyTabs.length === 0) { container.remove(); return; }
-        // Warn about first dirty tab, then chain
-        showWarnModal(dirtyTabs[0], () => {
-            dirtyTabs[0].isDirty = false;
-            attemptCloseAll();
+        const dirty = tabs.filter(t => t.isDirty);
+        if (!dirty.length) { container.remove(); return; }
+        showWarnModal(dirty[0], () => { dirty[0].isDirty = false; attemptCloseAll(); });
+    }
+
+    // ── Activity bar ───────────────────────────────────────────────────────────
+    $('#fp-act-explorer').onclick = () => {
+        sidebar.classList.toggle('collapsed');
+        $('#fp-act-explorer').classList.toggle('active', !sidebar.classList.contains('collapsed'));
+    };
+    $('#fp-act-new').onclick = () => { const t = createTab(null); switchTo(t); };
+    $('#fp-act-save').onclick = () => save(activeTab);
+
+    // ── Sidebar folder state ───────────────────────────────────────────────────
+    // openedFolder: Folder object currently shown in explorer (null = nothing opened)
+    // openedFolderPath: its FS path string (e.g. 'Documents' or '')
+    let openedFolder = null;
+    let openedFolderPath = null;
+
+    function openFolder(folderObj, folderPath) {
+        openedFolder = folderObj;
+        openedFolderPath = folderPath;
+        sideFolderNm.textContent = folderObj.name.toUpperCase();
+        renderSidebarTree();
+    }
+
+    function closeFolder() {
+        openedFolder = null;
+        openedFolderPath = null;
+        sideFolderNm.textContent = 'NO FOLDER OPENED';
+        renderSidebarNoFolder();
+    }
+
+    // ── Sidebar rendering ──────────────────────────────────────────────────────
+    function renderSidebarNoFolder() {
+        sideBody.innerHTML = '';
+
+        const prompt = document.createElement('div');
+        prompt.className = 'fp-sidebar-prompt';
+
+        const msg = document.createElement('div');
+        msg.className = 'fp-sidebar-prompt-msg';
+        msg.textContent = 'No folder opened';
+
+        const sub = document.createElement('div');
+        sub.className = 'fp-sidebar-prompt-sub';
+        sub.textContent = 'Open a folder to browse files';
+
+        const row = document.createElement('div');
+        row.className = 'fp-sidebar-open';
+
+        const input = document.createElement('input');
+        input.className = 'fp-sidebar-input';
+        input.placeholder = 'Folder path (blank = root)';
+        input.autocomplete = 'off';
+        input.spellcheck = false;
+
+        const btn = document.createElement('button');
+        btn.className = 'fp-sidebar-open-btn';
+        btn.textContent = 'Open';
+
+        function doOpenFolder() {
+            const val = input.value.trim();
+            const f = fs();
+            if (!f) return;
+            const folder = f.travelTo(val);
+            if (!folder) {
+                sub.textContent = `Not found: "${val || 'root'}"`;
+                sub.style.color = 'var(--fp-err)';
+                return;
+            }
+            openFolder(folder, val);
+        }
+
+        btn.onclick = doOpenFolder;
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') doOpenFolder(); });
+
+        row.append(input, btn);
+        prompt.append(msg, sub, row);
+        sideBody.appendChild(prompt);
+        setTimeout(() => input.focus(), 60);
+    }
+
+    function renderSidebarTree() {
+        sideBody.innerHTML = '';
+        if (!openedFolder) { renderSidebarNoFolder(); return; }
+
+        const treeEl = document.createElement('div');
+        treeEl.className = 'fp-sidebar-tree';
+        sideBody.appendChild(treeEl);
+
+        renderTreeChildren(openedFolder, treeEl, openedFolderPath, 0);
+    }
+
+    function renderTreeChildren(folder, parentEl, pathPrefix, depth) {
+        const sorted = [...folder.children].sort((a, b) => {
+            if (a.type === b.type) return a.name.localeCompare(b.name);
+            return a.type === 'folder' ? -1 : 1;
+        });
+        sorted.forEach(child => renderTreeItem(child, parentEl, pathPrefix, depth));
+    }
+
+    function renderTreeItem(child, parentEl, pathPrefix, depth) {
+        const childPath = pathPrefix ? `${pathPrefix}/${child.name}` : child.name;
+        const row = document.createElement('div');
+        row.className = 'fp-tree-row' + (child.type === 'folder' ? ' fp-tree-row--folder' : '');
+        row.dataset.path = childPath;
+
+        const indent = document.createElement('div');
+        indent.className = 'fp-tree-indent';
+        indent.style.paddingLeft = `${depth * 12 + 6}px`;
+
+        if (child.type === 'folder') {
+            const chev = document.createElement('span');
+            chev.className = 'fp-tree-chevron';
+            chev.textContent = '▶';
+
+            const icon = document.createElement('span');
+            icon.className = 'fp-tree-icon';
+            icon.textContent = '📁';
+
+            const label = document.createElement('span');
+            label.className = 'fp-tree-label';
+            label.textContent = child.name;
+
+            indent.append(chev, icon, label);
+            row.appendChild(indent);
+            parentEl.appendChild(row);
+
+            const childContainer = document.createElement('div');
+            parentEl.appendChild(childContainer);
+            let open = false;
+
+            row.addEventListener('click', (e) => {
+                e.stopPropagation();
+                open = !open;
+                chev.classList.toggle('open', open);
+                childContainer.innerHTML = '';
+                if (open) renderTreeChildren(child, childContainer, childPath, depth + 1);
+            });
+        } else {
+            const ext = child.extName || '';
+            const icon = document.createElement('span');
+            icon.className = 'fp-tree-icon';
+            icon.textContent = isImageExt(ext) ? '🖼' : '📄';
+
+            const label = document.createElement('span');
+            label.className = 'fp-tree-label';
+            label.textContent = `${child.name}.${ext}`;
+
+            indent.append(icon, label);
+            row.appendChild(indent);
+
+            row.addEventListener('click', (e) => {
+                e.stopPropagation();
+                sideBody.querySelectorAll('.fp-tree-row.active').forEach(r => r.classList.remove('active'));
+                row.classList.add('active');
+                openFileInTab(child);
+            });
+
+            parentEl.appendChild(row);
+        }
+    }
+
+    function refreshSidebarActive() {
+        if (!openedFolder || !activeTab?.fileRef) return;
+        sideBody.querySelectorAll('.fp-tree-row.active').forEach(r => r.classList.remove('active'));
+        sideBody.querySelectorAll('.fp-tree-row').forEach(r => {
+            const label = r.querySelector('.fp-tree-label');
+            const f = activeTab.fileRef;
+            if (label?.textContent === `${f.name}.${f.extName}`) r.classList.add('active');
         });
     }
 
-    // ── Toolbar ────────────────────────────────────────────────────────────────
-    $('#fp-btn-new').onclick = () => { const t = createTab(null); switchTo(t); };
-    $('#fp-btn-save').onclick = () => save(activeTab);
-    $('#fp-btn-open-file').onclick = () => showOpenFilePrompt();
-    $('#fp-btn-open-folder').onclick = () => toggleSidebar();
+    // Sidebar buttons
+    $('#fp-sidebar-refresh').addEventListener('click', renderSidebarTree);
+    $('#fp-sidebar-close-folder').addEventListener('click', closeFolder);
 
-    function showOpenFilePrompt() {
-        const path = prompt('Enter file path (e.g. Documents/notes.txt):');
-        if (path) openByPath(path.trim());
-    }
-    function toggleSidebar() {
-        sidebar.classList.toggle('hidden');
-        if (!sidebar.classList.contains('hidden')) renderSidebarTree();
-    }
-
-    // ── Keyboard shortcuts ─────────────────────────────────────────────────────
-    container.addEventListener('keydown', (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-            e.preventDefault();
-            save(activeTab);
-        }
-        if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-            e.preventDefault();
-            const t = createTab(null);
-            switchTo(t);
-        }
-        // Ctrl+W — close active tab
-        if ((e.ctrlKey || e.metaKey) && e.key === 'w') {
-            e.preventDefault();
-            if (!activeTab) return;
-            if (activeTab.isDirty) {
-                showWarnModal(activeTab, () => closeTab(activeTab));
-            } else {
-                closeTab(activeTab);
-            }
-        }
-        // Ctrl+Tab — next tab
-        if (e.ctrlKey && e.key === 'Tab') {
-            e.preventDefault();
-            const idx = tabs.indexOf(activeTab);
-            switchTo(tabs[(idx + 1) % tabs.length]);
-        }
-    });
-
-    // ── Open by path ───────────────────────────────────────────────────────────
-    function openByPath(rawPath) {
-        if (!rawPath) return;
-        const f = fs();
-        if (!f) return;
-        const file = f.getFile(rawPath);
-        if (!file) {
-            statusTxt.textContent = `Not found: ${rawPath}`;
-            statusTxt.style.color = 'var(--fp-err)';
-            setTimeout(() => { statusTxt.style.color = ''; }, 2000);
-            return;
-        }
-        openFileInTab(file);
-    }
-
+    // ── Open file in tab ───────────────────────────────────────────────────────
     function openFileInTab(fileRef) {
-        // Reuse existing tab if already open
         const existing = tabs.find(t => t.fileRef === fileRef);
         if (existing) { switchTo(existing); return; }
         const t = createTab(fileRef);
         switchTo(t);
     }
 
-    // ── Sidebar tree ───────────────────────────────────────────────────────────
-    function renderSidebarTree() {
-        sideTree.innerHTML = '';
-        const f = fs();
-        if (!f) return;
-        const root = f.travelTo('');
-        if (!root) return;
-        renderTreeNode(root, sideTree, '');
-    }
-
-    function renderTreeNode(folder, parentEl, pathPrefix) {
-        folder.children.forEach(child => {
-            const row = document.createElement('div');
-            const childPath = pathPrefix ? `${pathPrefix}/${child.name}` : child.name;
-
-            if (child.type === 'folder') {
-                row.className = 'fp-tree-item fp-tree-item--folder';
-                const chev = document.createElement('span');
-                chev.className = 'fp-tree-chevron';
-                chev.textContent = '▶';
-                const label = document.createElement('span');
-                label.textContent = `📁 ${child.name}`;
-                row.append(chev, label);
-
-                const childContainer = document.createElement('div');
-                childContainer.className = 'fp-tree-children';
-                childContainer.style.display = 'none';
-
-                let open = false;
-                row.onclick = (e) => {
-                    e.stopPropagation();
-                    open = !open;
-                    chev.classList.toggle('open', open);
-                    childContainer.style.display = open ? 'block' : 'none';
-                    if (open && childContainer.children.length === 0) {
-                        renderTreeNode(child, childContainer, childPath);
-                    }
-                };
-                parentEl.appendChild(row);
-                parentEl.appendChild(childContainer);
-            } else {
-                row.className = 'fp-tree-item';
-                const ext = child.extName || '';
-                const icon = isImageExt(ext) ? '🖼' : '📄';
-                row.textContent = `${icon} ${child.name}.${ext}`;
-                row.title = `${child.name}.${ext}`;
-                row.onclick = (e) => {
-                    e.stopPropagation();
-                    container.querySelectorAll('.fp-tree-item.active').forEach(el => el.classList.remove('active'));
-                    row.classList.add('active');
-                    openFileInTab(child);
-                };
-                parentEl.appendChild(row);
-            }
-        });
-    }
+    // ── Keyboard shortcuts ─────────────────────────────────────────────────────
+    container.addEventListener('keydown', (e) => {
+        const mod = e.ctrlKey || e.metaKey;
+        if (mod && e.key === 's') { e.preventDefault(); save(activeTab); }
+        if (mod && e.key === 'n') { e.preventDefault(); const t = createTab(null); switchTo(t); }
+        if (mod && e.key === 'w') {
+            e.preventDefault();
+            if (!activeTab) return;
+            if (activeTab.isDirty) showWarnModal(activeTab, () => closeTab(activeTab));
+            else closeTab(activeTab);
+        }
+        if (mod && e.key === 'Tab') {
+            e.preventDefault();
+            const idx = tabs.indexOf(activeTab);
+            switchTo(tabs[(idx + 1) % tabs.length]);
+        }
+    });
 
     // ── Init ───────────────────────────────────────────────────────────────────
     function init() {
+        renderSidebarNoFolder();
         const ctx = window.WebOS?.openContext;
         if (ctx?.fileRef) {
             const t = createTab(ctx.fileRef);
@@ -567,9 +615,8 @@
         }
     }
 
-    if (window.WebOS) {
-        init();
-    } else {
-        const t = setInterval(() => { if (window.WebOS) { clearInterval(t); init(); } }, 100);
+    if (window.WebOS) init();
+    else {
+        const poll = setInterval(() => { if (window.WebOS) { clearInterval(poll); init(); } }, 100);
     }
 })();
